@@ -1,0 +1,16 @@
+{
+  "name": "feishu-tmux-bot",
+  "version": "1.0.0",
+  "description": "Feishu bot to send commands to tmux",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.0.0",
+    "iconv-lite": "^0.7.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
