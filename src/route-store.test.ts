@@ -42,7 +42,6 @@ describe("route-store", () => {
 			fs.unlinkSync(TEST_DB);
 			fs.unlinkSync(`${TEST_DB}.tmp`);
 		} catch {}
-		await new Promise((r) => setTimeout(r, 600));
 	});
 
 	it("put and get returns the value", () => {
@@ -62,7 +61,7 @@ describe("route-store", () => {
 
 	it("loads persisted data", async () => {
 		store.put("msg_001", route);
-		await new Promise((r) => setTimeout(r, 600));
+		await store.flush();
 
 		const logger2 = makeTestLogger();
 		const store2 = makeRouteStore(TEST_DB, logger2);

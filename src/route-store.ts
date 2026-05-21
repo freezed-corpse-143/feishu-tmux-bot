@@ -45,13 +45,29 @@ export function makeRouteStore(dbPath: string, logger: Logger): RouteStore {
 		}
 	}
 
+	let savePromise: Promise<void> | null = null;
+
 	function debouncedSave(): void {
 		dirty = true;
 		if (saveTimer) return;
 		saveTimer = setTimeout(() => {
 			saveTimer = null;
-			save();
+			savePromise = save();
 		}, 500);
+	}
+
+	async function flush(): Promise<void> {
+		if (saveTimer) {
+			clearTimeout(saveTimer);
+			saveTimer = null;
+		}
+		if (dirty) {
+			savePromise = save();
+		}
+		if (savePromise) {
+			await savePromise;
+			savePromise = null;
+		}
 	}
 
 	function prune(): void {
@@ -85,5 +101,6 @@ export function makeRouteStore(dbPath: string, logger: Logger): RouteStore {
 		has(key: string): boolean {
 			return this.get(key) !== undefined;
 		},
+		flush,
 	};
 }

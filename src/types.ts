@@ -23,4 +23,5 @@ export interface RouteStore {
 	put(key: string, value: ChatRoute): void;
 	get(key: string): ChatRoute | undefined;
 	has(key: string): boolean;
+	flush(): Promise<void>;
 }
