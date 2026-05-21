@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import fs from "node:fs/promises";
+import path from "node:path";
 import type { ChatRoute, Logger, RouteStore } from "./types.js";
 
 const MAX_ENTRIES = 1500;
@@ -36,6 +37,8 @@ export function makeRouteStore(dbPath: string, logger: Logger): RouteStore {
 		if (!dirty) return;
 		dirty = false;
 		try {
+			const dir = path.dirname(dbPath);
+			await fs.mkdir(dir, { recursive: true });
 			const arr = [...store.entries()];
 			const tmp = `${dbPath}.tmp`;
 			await fs.writeFile(tmp, JSON.stringify(arr), "utf-8");
