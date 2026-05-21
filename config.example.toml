@@ -1,0 +1,20 @@
+# feishu-tmux-bot 多 bot 配置
+# 每个 bot 独立绑定一个 tmux session + 飞书 app + 端口
+# 复制此文件为 config.toml 并填入真实值
+# app_secret 支持 ${ENV_VAR} 环境变量引用
+
+[[bots]]
+name = "mybot1"
+app_id = "cli_xxxxxxxxxxxxx"
+app_secret = "${FEISHU_APP_SECRET_1}"
+session = "mybot1"
+pane = ":0.0"
+port = 9091
+
+# [[bots]]
+# name = "mybot2"
+# app_id = "cli_xxxxxxxxxxxxx"
+# app_secret = "${FEISHU_APP_SECRET_2}"
+# session = "mybot2"
+# pane = ":0.0"
+# port = 9092
