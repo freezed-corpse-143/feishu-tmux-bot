@@ -172,6 +172,10 @@ export function createApiServer(opts: CreateApiServerOptions): FastifyInstance {
 	// --- new: upload ---
 	app.post("/upload", async (req, reply) => {
 		try {
+			const ct = req.headers["content-type"] || "";
+			if (!ct.includes("multipart/form-data")) {
+				return reply.status(400).send({ ok: false, error: "需要 multipart/form-data" });
+			}
 			const data = await req.file();
 			if (!data) {
 				return reply.status(400).send({ ok: false, error: "未提供文件" });

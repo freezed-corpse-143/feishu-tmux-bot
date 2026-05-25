@@ -1,39 +1,127 @@
 # feishu-tmux-bot Service API
 
-收到消息时，tmux 中会出现：
+## 启动注入
+
+Bot 启动后向 tmux 注入一行铭牌 + 能力发现提示：
 
 ```
-[飞书消息 message_id=om_xxx]
-用户消息内容
-
-回复: printf '%s' '{"message_id":"om_xxx","text":"<你的回复>"}' | curl -s -X POST -H "Content-Type: application/json; charset=utf-8" --data-binary @- http://localhost:{{API_PORT}}/send
+[feishu-tmux-bot :9091]  发现能力: curl -s localhost:9091/capabilities
 ```
 
-**使用方法**：把 `<你的回复>` 替换为实际回复文本，整行执行即可。
+## 能力发现
 
-## 示例
-
-收到：
-```
-[飞书消息 message_id=om_456]
-你好
-
-回复: printf '%s' '{"message_id":"om_456","text":"<你的回复>"}' | curl -s -X POST -H "Content-Type: application/json; charset=utf-8" --data-binary @- http://localhost:{{API_PORT}}/send
-```
-
-回复时替换 `<你的回复>`：
 ```bash
-printf '%s' '{"message_id":"om_456","text":"你好！有什么可以帮你的？"}' | curl -s -X POST -H "Content-Type: application/json; charset=utf-8" --data-binary @- http://localhost:{{API_PORT}}/send
+curl -s http://localhost:{{API_PORT}}/capabilities
 ```
 
-## 注意
+返回所有可用端点及版本号。
 
-- `message_id` 已自动填入，不要改动
-- 只需替换 `<你的回复>` 部分
-- **必须用 `printf` + `--data-binary @-`**，不可用 `curl -d` 直接传中文
+## 端点
 
-## Health
+### GET /health
+
+健康检查。
 
 ```bash
 curl http://localhost:{{API_PORT}}/health
+# → {"status":"ok","ts":"2026-05-25T..."}
 ```
+
+### POST /send
+
+回复纯文本消息（向后兼容）。
+
+```bash
+curl -s -X POST http://localhost:{{API_PORT}}/send \
+  -H 'Content-Type: application/json' \
+  -d '{"message_id":"om_xxx","text":"回复内容"}'
+```
+
+### POST /reply
+
+统一回复接口，支持 `text` 和 `post` 格式。
+
+```bash
+# 纯文本
+curl -s -X POST http://localhost:{{API_PORT}}/reply \
+  -H 'Content-Type: application/json' \
+  -d '{"message_id":"om_xxx","text":"回复内容"}'
+
+# 富文本 (post)
+curl -s -X POST http://localhost:{{API_PORT}}/reply \
+  -H 'Content-Type: application/json' \
+  -d '{"message_id":"om_xxx","format":"post","content":{"zh_cn":{"title":"标题","content":[[{"tag":"text","text":"正文"}]]}}}'
+```
+
+### POST /react
+
+添加或删除表情回复。
+
+```bash
+# 添加
+curl -s -X POST http://localhost:{{API_PORT}}/react \
+  -H 'Content-Type: application/json' \
+  -d '{"message_id":"om_xxx","emoji":"thumbsup"}'
+
+# 删除 Bot 自己的 reaction
+curl -s -X POST http://localhost:{{API_PORT}}/react \
+  -H 'Content-Type: application/json' \
+  -d '{"message_id":"om_xxx","emoji":"thumbsup","action":"remove"}'
+```
+
+### POST /upload
+
+上传文件或图片到飞书，返回 `image_key` 或 `file_key`。
+
+```bash
+curl -s -X POST http://localhost:{{API_PORT}}/upload \
+  -F 'file=@/path/to/image.png'
+
+# → {"ok":true,"image_key":"img_xxx"}
+```
+
+### GET /download/:message_id
+
+下载消息中的媒体资源到本地 `downloads/` 目录。
+
+```bash
+curl -s http://localhost:{{API_PORT}}/download/om_xxx
+# → {"ok":true,"path":"downloads/om_xxx_img_abc.image","file_key":"img_abc"}
+```
+
+### GET /history/:chat_id
+
+拉取聊天历史（最近消息）。
+
+```bash
+curl -s 'http://localhost:{{API_PORT}}/history/oc_chat_id?limit=20'
+# → {"ok":true,"messages":[...],"has_more":false}
+```
+
+### GET /message/:message_id
+
+获取单条消息详情。
+
+```bash
+curl -s http://localhost:{{API_PORT}}/message/om_xxx
+# → {"ok":true,"message":{"message_id":"om_xxx","msg_type":"text",...}}
+```
+
+### POST /card
+
+发送交互式卡片。
+
+```bash
+curl -s -X POST http://localhost:{{API_PORT}}/card \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "message_id":"om_xxx",
+    "title":"卡片标题",
+    "markdown":"这是 **卡片内容**",
+    "buttons":[{"label":"确认","type":"primary"}]
+  }'
+```
+
+## 向后兼容
+
+`POST /send` 保留原有行为不变。所有依赖旧 API 的客户端无需修改。

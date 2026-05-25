@@ -9,7 +9,7 @@ import { createTmuxQueue, ensureTmuxSession } from "./tmux.js";
 import type { BotConfig } from "./types.js";
 
 function buildInitText(port: number): string {
-	return `[feishu-tmux-bot :${port}]`;
+	return `[feishu-tmux-bot :${port}]  发现能力: curl -s localhost:${port}/capabilities`;
 }
 
 export async function startBot(cfg: BotConfig) {
